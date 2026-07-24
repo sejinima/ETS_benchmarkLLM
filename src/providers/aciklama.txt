@@ -1,0 +1,25 @@
+elimizde şuan iki şey var: veri nasıl görünmeli ve modele ne soracağım(prompt)
+ama modeli çağıran kod yok. provider katmanı bunu sağlar. verimizi ve promptumuzu
+düzenlediğimize göre ai modelini çağırabiliriz. 
+provider katmanı=gemini apisine bağlanıp propmtu gönderip cevabı geri getirir.
+
+ihtiyacımız olanlar=base.py ve gemini.py
+
+base.py 
+model a ve model b aynı arayüzden çağırılır. ortak şablon lazım. her providerın
+classify(text: str) -> BenchmarkRecord fonskiyonu vardır. ilerde 3. model eklersem
+işime yarayacak bir şablon kod parçasıdır base.py sağlam mimari sağlar 
+
+
+gemini.py
+.env'den api key, model ismi ve fiyat okur
+prompt dosyasındaki {{MESSAGE}} okur ve yerine gerçek müşteri mesajı koyar
+cevabı hem metadata olarak hem de json stringi olarak alır
+metadata=input token, output token, latency
+süre ölçümü için queryden önce ve sonra zaman farkı alıp latency_ms çevirir.
+dönen metni ClassificationResult.model_validate_json() ile parse eder
+parse başarılıysa schema_valid=True, parsed=result, başarısızsa
+schema_valid=False, error_message=str(hata). tüm bunları BenchmarkRecord nesnesine
+doldurup cevabı döndürür. gemini.py içinde retry/hata yönetimi kod parçası lazım.
+1-api çağrısı başarısız oldu(network/rate limit) bir kaç kez dene tenacity kütüphanesi!!
+2-api cevapladı ama json bozuk. retry yok, schema_valid=false döndür.
