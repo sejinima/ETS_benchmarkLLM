@@ -3,6 +3,7 @@ import os
 from src.schemas import BenchmarkRecord, ClassificationResult
 import time
 from google import genai
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 
 class GeminiProvider(BaseProvider):
@@ -16,11 +17,7 @@ class GeminiProvider(BaseProvider):
 
         start_time=time.perf_counter()
 
-        #api çağrısı
-        def call_api(self, final_prompt) :
-            response=self.client.models.generate_content(
-                model=self.model_name,
-                contents=final_prompt )   
+        response=self._call_api(final_prompt)  
 
         end_time=time.perf_counter()
 
@@ -55,3 +52,12 @@ class GeminiProvider(BaseProvider):
             error_message=error_message
         )
 
+    @retry (stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
+
+    #api çağrısı
+    def _call_api(self, final_prompt) :
+        response=self.client.models.generate_content(
+            model=self.model_name,
+            contents=final_prompt ) 
+
+        return response
