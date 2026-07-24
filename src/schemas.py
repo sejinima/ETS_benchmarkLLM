@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, Field, field_validator
 
-class Intent (str, Enum):
+class Intent (str, Enum): #intent olarak 10 geçerli cevap var, bunların dışı hata
     NEW_RESERVATION = "NEW_RESERVATION"
     CANCEL_RESERVATION = "CANCEL_RESERVATION"
     CHANGE_RESERVATION = "CHANGE_RESERVATION"
@@ -21,7 +21,7 @@ class Urgency(str,Enum):
     MEDIUM = "MEDIUM"
     HIGH = "HIGH"
 
-
+#model bana ne döndürcek, json
 class ClassificationResult(BaseModel):
     intent: Intent
     urgency: Urgency
@@ -31,7 +31,7 @@ class ClassificationResult(BaseModel):
         "extra": "forbid"
     }
 
-class DatasetRecord(BaseModel):
+class DatasetRecord(BaseModel): #benim hazırladığım goldlabel verinin şekli
     id: str
     text: str
     expected_intent: Intent
