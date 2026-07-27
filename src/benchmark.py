@@ -10,7 +10,11 @@ sonuçları diske yazar. genel akış:
 
 from dotenv import load_dotenv
 import os
-from src.providers.gemini import GeminiProviderProvider
+from src.providers.gemini import GeminiProvider
+import pandas as pd
+from src.schemas import DatasetRecord
+import json
+import time
 
 
 
@@ -23,16 +27,50 @@ model_b_input_price= float(os.getenv("INPUT_PRICE_PER_MILLION_B"))
 model_b_output_price= float(os.getenv("OUTPUT_PRICE_PER_MILLION_B"))
 
 model_a_object = GeminiProvider(
-    model_name: gemini-2.0-flash
-    prompt_path: prompts/classification-v1.txt
-    input_price:
-    output_price:
+    model_name = model_a_name,
+    prompt_path= "prompts/classification-v1.txt",
+    input_price= model_a_input_price,
+    output_price= model_a_output_price
 )
 
 model_b_object = GeminiProvider(
-    model_name: gemini-2.0-pro
-    prompt_path: prompts/classification-v1.txt
-    input_price:
-    output_price:
+    model_name= model_b_name,
+    prompt_path= "prompts/classification-v1.txt",
+    input_price= model_b_input_price,
+    output_price= model_b_output_price
 )
+
+os.makedirs("output/raw", exist_ok=True)
+df = pd.read_csv("data/development-set.csv")
+
+providers=[model_a_object, model_b_object]
+processed = set()
+if os.path.exists("output/raw/results.jsonl"):
+    with open("output/raw/results.jsonl", "r") as f:
+        for line in f:
+            data = json.loads(line)
+            key= data["record_id"] + "_" + data["model_name"]
+            processed.add(key)
+
+for index, row in df.iterrows():
+    record = DatasetRecord(
+        id=str(row["id"]),
+        text=row["text"],
+        expected_intent=row["expected_intent"],
+        expected_urgency=row["expected_urgency"],
+        expected_handoff=row["expected_handoff"]
+    )
+
+    for provider in providers:
+        key = record.id+"_"+provider.model_name 
+        if key in processed:
+            continue
+
+        result=provider.classify(record_id=record.id, text=record.text)
+
+        with open ("output/raw/results.jsonl", "a") as f:
+            f.write(result.model_dump_json()+ "\n")
+            processed.add(key)
+
+        time.sleep(5)
 

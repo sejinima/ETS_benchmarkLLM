@@ -17,7 +17,7 @@ class Intent (str, Enum): #intent olarak 10 geçerli cevap var, bunların dış�
     OTHER = "OTHER"
 
 class Urgency(str,Enum):
-    LOW = "HIGH"
+    LOW = "LOW"
     MEDIUM = "MEDIUM"
     HIGH = "HIGH"
 
