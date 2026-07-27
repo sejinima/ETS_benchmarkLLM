@@ -66,3 +66,5 @@ cost_b = CostBreakdown(
     output_price_per_million = model_b_output_price
 )
 
+print(f"{model_a_name} toplam maliyet: ${cost_a.total_cost:.4f}")
+print(f"{model_b_name} toplam maliyet: ${cost_b.total_cost:.4f}")
