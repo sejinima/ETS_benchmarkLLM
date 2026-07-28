@@ -16,7 +16,8 @@ from src.schemas import DatasetRecord
 import json
 import time
 
-
+HARD_RECORD_IDS = ["031", "032", "033", "034", "035", 
+                   "036", "037", "038", "049", "050", "051", "052", "053", "057", "059"]
 
 load_dotenv()
 model_a_name=os.getenv("MODEL_A")
