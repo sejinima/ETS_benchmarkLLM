@@ -10,7 +10,7 @@ results.jsonl oku ve datasetteki doğru cevaplarla karşılaştırıp 3 veri hes
 
 import pandas as pd
 import json
-from schemas import CostBreakdown
+from src.schemas import CostBreakdown
 import os
 from dotenv import load_dotenv
 from sklearn.metrics import precision_score, recall_score, f1_score, confusion_matrix
@@ -148,3 +148,21 @@ print(f"Confusion Matrix for Model A: \n{confusion_a_df}")
 print()
 print(f"Confusion Matrix for Model B: \n{confusion_b_df}")
 
+
+consistency_df = pd.read_json("output/raw/consistency.jsonl", lines=True)
+consistency_df["record_id"]= consistency_df["record_id"].astype(str)
+consistency_df["predicted_intent"] = consistency_df["parsed"].apply(lambda x: x["intent"] if x else None)
+
+
+consistency_per_record = consistency_df.groupby(["record_id", "model_name"])["predicted_intent"].apply(
+    lambda x: x.value_counts().max() / len(x)
+)
+
+consistency_by_model = consistency_per_record.groupby("model_name").mean()
+
+print("\n\n9) CONSISTENCY (TUTARLILIK)")
+print("Kayıt bazında tutarlılık oranları:")
+print(consistency_per_record)
+print()
+print("Model bazında ortalama tutarlılık:")
+print(consistency_by_model)

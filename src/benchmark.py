@@ -16,8 +16,8 @@ from src.schemas import DatasetRecord
 import json
 import time
 
-HARD_RECORD_IDS = ["031", "032", "033", "034", "035", 
-                   "036", "037", "038", "049", "050", "051", "052", "053", "057", "059"]
+HARD_RECORD_IDS = ["31", "32", "33", "34", "35", "36", "37", 
+                   "38", "49", "50", "51", "52", "53", "57", "59"]
 
 load_dotenv()
 model_a_name=os.getenv("MODEL_A")
@@ -43,8 +43,14 @@ model_b_object = GeminiProvider(
 
 os.makedirs("output/raw", exist_ok=True)
 df = pd.read_csv("data/development-set.csv")
+df["id"] = df["id"].astype(str)
 
 providers=[model_a_object, model_b_object]
+
+
+
+
+
 processed = set()
 if os.path.exists("output/raw/results.jsonl"):
     with open("output/raw/results.jsonl", "r") as f:
@@ -74,4 +80,48 @@ for index, row in df.iterrows():
             processed.add(key)
 
         time.sleep(5)
+
+print("main run done. \n")
+
+
+os.makedirs("output/raw", exist_ok=True)
+ 
+consistency_processed = set()
+if os.path.exists("output/raw/consistency.jsonl"):
+    with open("output/raw/consistency.jsonl", "r") as f:
+        for line in f:
+            data = json.loads(line)
+            # anahtar: record_id + model_name + repetition numarası
+            key = data["record_id"] + "_" + data["model_name"] + "_" + str(data["repetition"])
+            consistency_processed.add(key)
+
+
+for hard_id in HARD_RECORD_IDS:
+    matching_row = df[df["id"]==hard_id]
+
+
+    if len(matching_row)==0:
+        print(f"uyarı!!!!!!: {hard_id} idsi olan kayırlar bu datasette yok, atlıyoruz")
+        continue
+
+    hard_text = matching_row.iloc[0]["text"]
+
+    for provider in providers:
+        for repetition in [1, 2, 3]:
+            key = hard_id + "_" + provider.model_name + "_" + str(repetition)
+            if key in consistency_processed:
+                continue
+ 
+            result = provider.classify(record_id=hard_id, text=hard_text)
+
+            result_dict = json.loads(result.model_dump_json())
+            result_dict["repetition"] = repetition
+ 
+            with open("output/raw/consistency.jsonl", "a") as f:
+                f.write(json.dumps(result_dict) + "\n")
+                consistency_processed.add(key)
+ 
+            time.sleep(5)
+
+print("consistency run done.\n")
 
